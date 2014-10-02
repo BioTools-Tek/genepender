@@ -11,7 +11,7 @@
 #define KEEPINT_ID "--keepall"
 
 void usage(){
-    cerr << "v2013_07_16" << endl;
+    cerr << "v2014_09_30" << endl;
     cerr << "Appends a new column containing gene names, whilst filtering out intergenic regions (i.e. where there are no genes), and can also optionally filter out introns.\n" << endl;
     cerr << "Usage: genepender <genemap> <column file> <rejects> [OPTIONS]" << endl;
     cerr << endl;
