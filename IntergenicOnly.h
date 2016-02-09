@@ -40,7 +40,7 @@ void IntergenicOnly::appendToVCF(){
         QTextStream in(&inputFile);
         QString line ="##";
 
-        handleHeaders(line, in, countline, rej, false); // false print gene headers
+        handleHeaders(line, in, countline, rej, out);
 
         //Begin parsing
         while (!in.atEnd()){
@@ -105,7 +105,7 @@ void IntergenicOnly::appendToVCF(){
                 lineout.append(tokens[k].trimmed()).append('\t');
             }
 
-            if (foundgene) cout << lineout.toUtf8().data() << endl;
+            if (foundgene) out << lineout.toUtf8().data() << endl;
             else rej << lineout.toUtf8().data() << endl;
         }
     }

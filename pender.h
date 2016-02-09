@@ -39,20 +39,48 @@ public:
 class Pender : MapInterface
 {
 public:
-    Pender(QString &map, QString &colf, QString &rejects, bool &append, bool &skipbad, bool &keepints){
+    Pender(QString &map, QString &colf, QString &rejects, QString &outf,
+           bool &append, bool &skipbad, bool &keepints, bool &force_processing)
+    {
         mapfile = map;
         colfile = colf;
+        outfile = outf;
+
         appendmultiple = append;
         skipbadscore = skipbad;
         keepall = keepints;
+        forceprocs = force_processing;
+
+        if (!forceprocs){
+            bool processedInput  = alreadyProcessed(colf);
+            bool processedOutput = alreadyProcessed(outf);
+
+
+            if (processedInput){
+                cerr << "Gene headers present in input. Skipping" << endl;
+                exit(1);
+            }
+            if (processedOutput){
+                cerr << "Gene headers present in output. Skipping." << endl;
+                exit(2);
+            }
+        }
+
+        // Either exitted due to previous processing, or go ahead given.
+
         //Open Channel
         rej.open(rejects.toUtf8().data());
+        out.open(outf.toUtf8().data());
 
         populateMap();
         appendToVCF();
     }
 
-    ~Pender(){ rej.close();}
+
+    ~Pender(){
+        rej.close();
+        out.close();
+    }
 
     //chrom-->Genesos --> Gene --> Exon
     QMap<QString, QMap<QString, GeneHolder*> > chromemap;
@@ -61,6 +89,7 @@ public:
 
     void appendToVCF();
     void populateMap();
+    bool alreadyProcessed(QString filename);
 };
 
 #endif // PENDER_H

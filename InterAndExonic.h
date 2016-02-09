@@ -17,20 +17,26 @@ private:
 public:
     int splice_sites;
 
-    InterAndExonic(QString &map, QString &colf, QString &rejects, bool &append, bool &skipbad, int &splice){
+    InterAndExonic(QString &map, QString &colf, QString &rejects, QString &outfile,
+                   bool &append, bool &skipbad, int &splice){
         mapfile = map;
         colfile = colf;
         appendmultiple = append;
         skipbadscore = skipbad;
         splice_sites = splice;
+
         //Open Channel
         rej.open(rejects.toUtf8().data());
+        out.open(outfile.toUtf8().data());
 
         populateMap();
         appendToVCF();
     }
 
-    ~InterAndExonic(){ rej.close(); }
+    ~InterAndExonic(){
+        rej.close();
+        out.close();
+    }
 
 //    [chrom, [gene, [  [max,min], [exon, [ pos1, pos2 ] ] ] ]]        [Qstring, [QString, [GeneHolder]]]
     QMap<QString, QMap<QString, GeneHolder> > chromemap;
@@ -47,10 +53,11 @@ void InterAndExonic::appendToVCF(){
 
     if (inputFile.open(QIODevice::ReadOnly))
     {
+
         QTextStream in(&inputFile);
         QString line="##";
 
-        handleHeaders(line, in, countline, rej, true); // true print exon headers, find FORMAT_INDEX
+        handleHeaders(line, in, countline, rej, out); // true print exon headers, find FORMAT_INDEX
 
         //Begin parsing
         while (!in.atEnd()){
@@ -163,7 +170,7 @@ void InterAndExonic::appendToVCF(){
             if (foundOneGene){
                 if (foundOneExon){
                     //GeneName + Exon
-                    cout << lineout.toUtf8().data() << endl;
+                    out << lineout.toUtf8().data() << endl;
                 }
                 else { //GeneName + Intron
                     rej << lineout.toUtf8().data() << endl;

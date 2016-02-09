@@ -1,6 +1,46 @@
 #include "pender.h"
 
 
+bool Pender::alreadyProcessed(QString filename){
+    QFile inputFile(filename);
+
+    if (inputFile.open(QIODevice::ReadOnly))
+    {
+        QTextStream in(&inputFile);
+
+        bool found_al_column = false;
+
+        QString line ="##";
+
+        while (!in.atEnd()){
+            line = in.readLine();
+
+            if (line.length() < 2) continue;
+
+            // Skip any missed headers (just in case..)
+            if (line[0]=='#') continue;
+
+            // Test first data line
+            QStringList tokens = line.split('\t');
+
+            QStringList format_col = tokens.at(FORMAT_INDEX).split(':'); //"AL:GY:ZYG:ETC"
+
+            if (format_col.contains(AL_ID)){
+                found_al_column = true;
+            }
+            break;
+        }
+        inputFile.close();
+
+        if (found_al_column){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
 void Pender::appendToVCF()
 {
     QFile inputFile(colfile);
@@ -12,9 +52,7 @@ void Pender::appendToVCF()
         QTextStream in(&inputFile);
         QString line ="##";
 
-        handleHeaders(line, in, countline, rej);
-
-        bool alreadychecked=false;
+        handleHeaders(line, in, countline, rej, out);
 
         //Begin parsing
         while (!in.atEnd()){
@@ -25,21 +63,7 @@ void Pender::appendToVCF()
             line = in.readLine();
             QStringList tokens = line.split('\t');
 
-            //Check if file has already been processed
-            if (!alreadychecked){
-                QStringList format_col = tokens.at(FORMAT_INDEX).split(':'); //"AL:GY:ZYG:ETC"
-                if (format_col.contains(AL_ID)){
-                    cerr << colfile.toUtf8().data() << " has already been processed! Printing out everything." << endl;
-                    cout << line.toUtf8().data() << endl;
-                    while (!in.atEnd()){
-                        cout << in.readLine().toUtf8().data() << endl;
-                    }
-                    exit(0);
-                }
-                alreadychecked = true;
-            }
             //Begin processing
-
             QString chrom = tokens[0].trimmed();
             uint pos = QString(tokens[1]).trimmed().toUInt();
 
@@ -130,11 +154,11 @@ void Pender::appendToVCF()
 
             if(foundGene){
                 if(foundIso){
-                    if(foundExtras) cout << lineout.toUtf8().data() << endl;
-                    else ((this->keepall)?cout:rej) << lineout.toUtf8().data() << endl;
+                    if(foundExtras) out << lineout.toUtf8().data() << endl;
+                    else ((this->keepall)?out:rej) << lineout.toUtf8().data() << endl;
                 }
-                else ((this->keepall)?cout:rej) << lineout.toUtf8().data() << endl;
-            } else ((this->keepall)?cout:rej) << lineout.toUtf8().data() << endl;
+                else ((this->keepall)?out:rej) << lineout.toUtf8().data() << endl;
+            } else ((this->keepall)?out:rej) << lineout.toUtf8().data() << endl;
         }
     }
     cerr << "\r\t\tColFile: 100%         " << endl;

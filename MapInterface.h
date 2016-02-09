@@ -46,10 +46,13 @@ public:
 
     QString mapfile;
     QString colfile;
+    QString outfile;
     ofstream rej;
+    ofstream out;
     bool appendmultiple;
     bool skipbadscore;
     bool keepall;
+    bool forceprocs;
 
     static uint countlines(QString file){
         uint lines=0;
@@ -65,7 +68,8 @@ public:
         return lines;
     }
 
-    static void handleHeaders(QString &line, QTextStream &in, uint &countline, ofstream &rejects)
+    static bool handleHeaders(QString &line, QTextStream &in, uint &countline,
+                              ofstream &rej, ofstream &out)
     {
         line="##";
 
@@ -102,12 +106,12 @@ public:
 
             else {
                 if(found_format==0){ // Found format but now it's ended
-                    if (!found_header_alist) cout << HEADER_ALIST_FULL << endl; //Never found header, print new one
+                    if (!found_header_alist) out << HEADER_ALIST_FULL << endl; //Never found header, print new one
                     found_format=-2; // so that we know that it at least exists
                 }
             }
-            cout << line.toUtf8().data() << endl; // Output to rejects and cout too
-            rejects <<  line.toUtf8().data() << endl;
+            out << line.toUtf8().data() << endl; // Output to rejects and out too
+            rej <<  line.toUtf8().data() << endl;
 
             countline++;
             bufferpos = in.pos();
@@ -116,10 +120,12 @@ public:
         //Never found ##FORMAT in header
         if(found_format==-1){
             cerr << "No Format line in header!\nPrinting new one anyway..." << endl;
-            if (!found_header_alist) cout << HEADER_ALIST_FULL << endl; //Never found header, print new one
+            if (!found_header_alist) out << HEADER_ALIST_FULL << endl; //Never found header, print new one
         }
         //Go to end of headers
         in.seek(bufferpos);
+
+        return found_header_alist;
     }
 };
 
