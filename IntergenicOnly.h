@@ -22,7 +22,7 @@ public:
 
     ~IntergenicOnly(){ rej.close();}
 
-    QMap<QString,QMap<QString, genedee> > chromemap;
+    ChromosomeMap chromemap;
 
     void appendToVCF();
     void populateMap();

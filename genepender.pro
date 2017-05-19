@@ -22,4 +22,7 @@ HEADERS += \
     IntergenicOnly.h \
     MapInterface.h \
     InterAndExonic.h \
-    pender.h
+    pender.h \
+    genemap.h \
+    FileUtils.h \
+    Types.h

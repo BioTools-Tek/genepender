@@ -1,60 +1,47 @@
 #include "MapInterface.h"
 
 
+
 #ifndef PENDER_H
 #define PENDER_H
 
-class MaxMin{
-public:
-    uint max, min;
-    MaxMin(){MaxMin(0,0);}
-    MaxMin(uint mi, uint mx){min=mi;max=mx;}
-    void updateMaxMin(uint x1, uint x2){
-        min = (x1<min)?x1:min;
-        max = (x2>max)?x2:max;
-    }
-};
+#include "FileUtils.h"
+#include "Types.h"
 
-class IsoHolder{
+class Pender {
 public:
-    MaxMin maxmin;
-    QMap<QString, MaxMin> extras;
-    IsoHolder(QMap<QString, MaxMin> extras, MaxMin maxmin){
-        this->extras = extras;
-        this->maxmin = maxmin;
-    }
-};
+    ofstream rej;
+    ofstream out;
+    bool keepall;
+    bool forceprocs;
 
-class GeneHolder{
-public:
-    MaxMin maxmin;
-    QMap<QString, IsoHolder*> isos;
-    GeneHolder(QMap<QString, IsoHolder*> genesAndIsos, MaxMin maxmin){
-        this->isos = genesAndIsos;
-        this->maxmin = maxmin;
-    }
-};
-
-
-class Pender : MapInterface
-{
-public:
-    Pender(QString &map, QString &colf, QString &rejects, QString &outf,
-           bool &append, bool &skipbad, bool &keepints, bool &force_processing)
+    //Pender(gmp->chromemap, colfile, keepints, force);
+    Pender(ChromosomeMap &chromemap, QString &colf, QString &outdir, QString &prefext, bool &keepints, bool &force_processing)
     {
-        mapfile = map;
-        colfile = colf;
-        outfile = outf;
+        QString outf = FileUtils::suffixToFilename(colf, "genes");
+        QString rejects = FileUtils::suffixToFilename(colf, "genes.rejects");
 
-        appendmultiple = append;
-        skipbadscore = skipbad;
+        QString new_outdir = outdir;
+
+        if (prefext != ""){
+            new_outdir = FileUtils::makePrefixRootDir(colf, outdir, prefext);
+        }
+
+        outf = "./" + new_outdir + "/" + outf.split("/").last();
+        rejects = "./" + new_outdir + "/" + rejects.split("/").last();
+
+
+        //cerr << "outf = " << outf.toUtf8().data() << endl;
+        //cerr << "rejects = " << rejects.toUtf8().data() << endl;
+
         keepall = keepints;
         forceprocs = force_processing;
+
+        this->chromemap = chromemap;
 
         if (!forceprocs){
             bool processedInput  = alreadyProcessed(colf);
             bool processedOutput = alreadyProcessed(outf);
-
 
             if (processedInput){
                 cerr << "Gene headers present in input. Skipping" << endl;
@@ -72,9 +59,12 @@ public:
         rej.open(rejects.toUtf8().data());
         out.open(outf.toUtf8().data());
 
-        populateMap();
-        appendToVCF();
+        //        cerr << "Rejects: " << rejects.toUtf8().data() << endl;
+        //        cerr << "Outfile: " << outf.toUtf8().data() << endl;
+
+        appendToVCF(colf);
     }
+
 
 
     ~Pender(){
@@ -82,14 +72,12 @@ public:
         out.close();
     }
 
-    //chrom-->Genesos --> Gene --> Exon
-    QMap<QString, QMap<QString, GeneHolder*> > chromemap;
-    //chrom-->Gene name --> maxmin, and geneSo
+    ChromosomeMap chromemap;
 
-
-    void appendToVCF();
+    void appendToVCF(QString filename);
     void populateMap();
     bool alreadyProcessed(QString filename);
 };
+
 
 #endif // PENDER_H
