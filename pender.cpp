@@ -161,7 +161,10 @@ void Pender::appendToVCF(QString colfile)
         }
     }
     cerr << "\r\t" << id.toUtf8().data() << ":\t" << ((100*countline)/numlines) << "%   " << endl;
+
     inputFile.close();
+    out.close();
+    rej.close();
 }
 
 

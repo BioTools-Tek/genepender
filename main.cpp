@@ -14,7 +14,7 @@
 #define PREFEXTR_ID "--prefix-extract="
 
 void usage(){
-    cerr << "2.1v20170519.1" << endl;
+    cerr << "2.3v20170520" << endl;
     cerr << endl;
     cerr << "Appends a new column containing gene names, whilst filtering out intergenic regions (i.e. where there are no genes), and can also optionally filter out introns.\n" << endl;
     cerr << "Usage: genepender <genemap> <[VCFS]> <[OPTIONS]" << endl;

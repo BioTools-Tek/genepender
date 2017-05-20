@@ -12,8 +12,10 @@ static int INDIV_START_INDEX = 9; // Default
 class FileUtils {
 public:
     static bool makeFolder(QString dirname){
+        //cerr << "Request path:" << dirname.toUtf8().data() << endl;
         QDir dir(dirname);
         if (!dir.exists()){
+            //cerr << "Making path:" << dir.dirName().toUtf8().data() << endl;
             return dir.mkpath(".");
         }
         return false;

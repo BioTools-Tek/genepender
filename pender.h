@@ -27,8 +27,12 @@ public:
             new_outdir = FileUtils::makePrefixRootDir(colf, outdir, prefext);
         }
 
-        outf = "./" + new_outdir + "/" + outf.split("/").last();
-        rejects = "./" + new_outdir + "/" + rejects.split("/").last();
+        if (outdir == ""){
+            new_outdir = "./";
+        }
+
+        outf = new_outdir + "/" + outf.split("/").last();
+        rejects = new_outdir + "/" + rejects.split("/").last();
 
 
         //cerr << "outf = " << outf.toUtf8().data() << endl;
@@ -55,22 +59,19 @@ public:
 
         // Either exitted due to previous processing, or go ahead given.
 
-        //Open Channel
+        //Open Channels
         rej.open(rejects.toUtf8().data());
         out.open(outf.toUtf8().data());
 
-        //        cerr << "Rejects: " << rejects.toUtf8().data() << endl;
-        //        cerr << "Outfile: " << outf.toUtf8().data() << endl;
+        // cerr << "Rejects: " << rejects.toUtf8().data() << endl;
+        // cerr << "Outfile: " << outf.toUtf8().data() << endl;
 
         appendToVCF(colf);
     }
 
 
 
-    ~Pender(){
-        rej.close();
-        out.close();
-    }
+    ~Pender(){}
 
     ChromosomeMap chromemap;
 
