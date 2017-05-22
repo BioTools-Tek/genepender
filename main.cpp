@@ -14,7 +14,7 @@
 #define PREFEXTR_ID "--prefix-extract="
 
 void usage(){
-    cerr << "2.3v20170520" << endl;
+    cerr << "2.5v20170522" << endl;
     cerr << endl;
     cerr << "Appends a new column containing gene names, whilst filtering out intergenic regions (i.e. where there are no genes), and can also optionally filter out introns.\n" << endl;
     cerr << "Usage: genepender <genemap> <[VCFS]> <[OPTIONS]" << endl;
@@ -39,24 +39,21 @@ int main(int argc, char *argv[])
 
     QStringList files;
 
-    if (argc<3) usage();
-
-    if (argc >= 3){
-        for (int i=3; i < argc; i++){
-            QString arg = argv[i];
-            if      ( arg==FORCE_ID    ) force = true;
-            else if ( arg==KEEPINT_ID  ) keepints = true;
-            else if ( arg.startsWith(OUTPATH_ID)  ){ outdir = arg.split(OUTPATH_ID).last();}
-            else if ( arg.startsWith(PREFEXTR_ID) ){ prefext= arg.split(PREFEXTR_ID).last();}
-            else if ( arg.startsWith("--")){
-                cerr << "Unable to parse:" << arg.toUtf8().data() << endl;
-                exit(-1);
-            }
-            else {
-                files.append(arg);
-            }
+    for (int i=2; i < argc; i++){
+        QString arg = argv[i];
+        if      ( arg==FORCE_ID    ) force = true;
+        else if ( arg==KEEPINT_ID  ) keepints = true;
+        else if ( arg.startsWith(OUTPATH_ID)  ){ outdir = arg.split(OUTPATH_ID).last();}
+        else if ( arg.startsWith(PREFEXTR_ID) ){ prefext= arg.split(PREFEXTR_ID).last();}
+        else if ( arg.startsWith("--")){
+            cerr << "Unable to parse:" << arg.toUtf8().data() << endl;
+            exit(-1);
+        }
+        else {
+            files.append(arg);
         }
     }
+    if (files.length()==0) usage();
 
     QString mapfile = argv[1];
     GeneMap *gmp = new GeneMap(mapfile);

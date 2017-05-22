@@ -70,7 +70,6 @@ void Pender::appendToVCF(QString colfile)
             QString chrom = tokens[0].trimmed();
             uint pos = QString(tokens[1]).trimmed().toUInt();
 
-            QString genename="";
 
             bool foundThisGene=false;
             bool foundGene=false;
@@ -80,6 +79,8 @@ void Pender::appendToVCF(QString colfile)
 
             QStringList allgeneKeys = chromemap[chrom].keys();
             GeneNameMap &allgenes = chromemap[chrom];
+
+            QMap<QString,bool> genename; // out line
 
             for (int i=0; (i< allgeneKeys.length() && !stop); i++){
                 QString &gene_name = allgeneKeys[i];
@@ -117,16 +118,15 @@ void Pender::appendToVCF(QString colfile)
                                    foundExtras = true;
                                    foundThisExtra = true;
 
-                                   gene.append("|"+extra);
-
-                                   if(genename=="") genename = gene;
-                                   else genename.append(","+gene);
+                                   QString fullgene = gene + "|" + extra;
+                                   // duplicates get overwritten
+                                   genename[fullgene] = true;
                                 }
                             }
+
                             if(!foundThisExtra){
-                                gene.append("|Intron");
-                                if(genename=="") genename = gene;
-                                else genename.append(","+gene);
+                                QString fullgene = gene + "|Intron";
+                                genename[fullgene] = true;
                             }
                         }
                     }
@@ -139,10 +139,14 @@ void Pender::appendToVCF(QString colfile)
             }
 
             //empty genelist = intergenic
-            if (genename.length()==0) genename.append(INTERGENIC);
+            if (genename.size() == 0 ) genename[INTERGENIC] = true;
+
+            // Build genename line
+            QStringList genename_keys = genename.keys();
+            QString out_genename = genename_keys.join(",");
 
             tokens[FORMAT_INDEX].append(':').append(AL_ID);
-            tokens[INDIV_START_INDEX].append(':').append(genename);
+            tokens[INDIV_START_INDEX].append(':').append(out_genename);
 
             //Build line
             QString lineout;

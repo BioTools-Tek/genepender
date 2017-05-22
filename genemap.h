@@ -20,10 +20,6 @@ private:
         {
             QTextStream in(&inputFile);
             while(!in.atEnd()){
-                ++count;
-                //cerr << "\rMapFile: " << count << flush;
-                if (count%300==0)
-                    cerr << "\rMapFile: " << ((100*count)/numlines) << '%' << flush;
 
                 QStringList tokens = in.readLine().split('\t');
 
@@ -32,78 +28,76 @@ private:
                 uint pos1 = QString(tokens[1]).trimmed().toUInt();
                 uint pos2 = QString(tokens[2]).trimmed().toUInt();
 
-                /*
-            Possible configs:
-            =================
-            RPL23AP82|Exon1_5'UTR
-            XKR3|Exon1
-            PI4KA-ISOF1|Exon13
-            RABL2B-ISOF4|3'UTR
-            SHANK3
-            LOC101101776|Intron1
-            OR11H1-CCT8L2|Intergenic
-            BCL2L13-ISOF10|Exon2_SpliceD
-            */
                 QString genxon = QString(tokens[3]).trimmed();
                 QString gene = genxon;  // Assuming no '|'
                 QString geneNoIso = gene.split("-ISO")[0].split('|')[0].trimmed();
 
                 QString extra= ""; // Nothing extra             Exon_Splice,Intron,Intergenic
 
-                if(genxon.contains('|')){
+                /*
+                Possible configs:
+                =================
+                Gene1
+                Gene1|Exon1
+                Gene1-ISOF1|Exon13
+                Gene1|Exon1_5'UTR
+                Gene1|Intron1
+                Gene1-ISOF4|3'UTR
+                Gene1-ISOF10|Exon2_SpliceD
+                Gene1-Gene2|Intergenic
+                */
+
+                if (genxon.contains('|')){
                     QStringList g = genxon.split('|');
 
                     gene = g[0].trimmed(); //Update to real gene
                     extra = (g.length() > 1)?(g[1].trimmed()):"";
                 }
 
-                // depreciated
-                /*if (skipbadscore && ((tokens.length()>4))){
-                    QString score = QString(tokens[4]).trimmed();
-                    if (score!="cC") continue;
-                }*/
-
+                // New chrom, new map
                 if (!chromemap.contains(chrom)){
                     GeneNameMap genemap;
                     chromemap[chrom] = genemap;
                 }
-                else {
-                    //Chrom exists, check gene names
-                    GeneNameMap &allgenenames = chromemap[chrom];
 
-                    // All genes in that chromosome -- names
-                    if (!allgenenames.contains(geneNoIso)){
-                        IsoformMap isos;
-                        GeneHolder *gh = new GeneHolder(isos, MaxMin(pos1, pos2));
-                        allgenenames[geneNoIso] = gh;
+                //Chrom now exists, check gene names
+                GeneNameMap &allgenenames = chromemap[chrom];
 
+                // New gene, new geneholder in chrom, insert current as Max Min bounds of gene
+                if (!allgenenames.contains(geneNoIso)){
+                    IsoformMap isos;
+                    GeneHolder *gh = new GeneHolder(isos, MaxMin(pos1, pos2));
+                    allgenenames[geneNoIso] = gh;
+                }
+
+
+                // All genes within that gene -- isoforms and all
+                GeneHolder *isos_gene = allgenenames[geneNoIso];
+                isos_gene->maxmin.updateMaxMin(pos1,pos2);
+                IsoformMap &isos = isos_gene->isos;
+
+                // Is gene(isoform) in isoform map?
+                if(!isos.contains(gene)){
+                    RegionMap extras;
+                    isos[gene] = new IsoHolder(extras, MaxMin(pos1,pos2));
+                }
+
+
+                //All extras within that isoform
+                IsoHolder *isogenes = isos[gene];
+                isogenes->maxmin.updateMaxMin(pos1,pos2);
+                RegionMap &extra_refs = isogenes->extras;
+
+                if(extra==""){
+                    if(!extra_refs.contains(extra)){
+                        extra_refs[extra] = MaxMin(isogenes->maxmin.min, isogenes->maxmin.max);
                     }
-                    else { // All genes within that gene -- isoforms and all
-                        GeneHolder *isos_gene = allgenenames[geneNoIso];
-                        isos_gene->maxmin.updateMaxMin(pos1,pos2);
-                        IsoformMap &isos = isos_gene->isos;
-
-                        if(!isos.contains(gene)){
-                            RegionMap extras;
-                            isos[gene] = new IsoHolder(extras, MaxMin(pos1,pos2));
-                        }
-                        else { //All extras within that isoform
-                            IsoHolder *isogenes = isos[gene];
-                            isogenes->maxmin.updateMaxMin(pos1,pos2);
-                            RegionMap &extra_refs = isogenes->extras;
-
-                            if(extra==""){
-                                if(!extra_refs.contains(extra)){
-                                    extra_refs[extra] = MaxMin(isogenes->maxmin.min, isogenes->maxmin.max);
-                                }
-                            } else {
-                                if(!extra_refs.contains(extra)){
-                                    extra_refs[extra] = MaxMin(pos1,pos2);
-                                }
-                            }
-                        }
+                } else {
+                    if(!extra_refs.contains(extra)){
+                        extra_refs[extra] = MaxMin(pos1,pos2);
                     }
                 }
+                if (++count%300==0) cerr << "\rMapFile: " << ((100*count)/numlines) << '%' << flush;
             }
         }
         cerr << "\rMapFile: 100% \n" << flush;
