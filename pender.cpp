@@ -124,10 +124,11 @@ void Pender::appendToVCF(QString colfile)
                                 }
                             }
 
-                            if(!foundThisExtra){
+                            // Only if input map has introns will they be included
+                            /*if(!foundThisExtra){
                                 QString fullgene = gene + "|Intron";
                                 genename[fullgene] = true;
-                            }
+                            }*/
                         }
                     }
 //                    if(!foundThisIso){
